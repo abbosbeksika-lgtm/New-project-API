@@ -139,7 +139,18 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media'
 
 
-EMAIL_EXPIRATION_TIME = timedelta(minutes=3)
-PHONE_EXPIRATION_TIME = timedelta(minutes=2)
+EMAIL_EXPIRATION_TIME = 3
+PHONE_EXPIRATION_TIME = 2
 
+
+REST_FRAMEWORK = {'DEFAULD_AUTHENTICATION_CLASSES':[
+    'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permission.IsAuthenticated',
+    ]
+}
+
+
+AUTH_USER_MODEL = 'users.CustomUser'
 

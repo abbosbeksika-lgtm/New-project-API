@@ -37,8 +37,7 @@ class CustomUser(AbstractUser, BaseModel):
     auth_type = models.CharField(max_length=20, choices=USER_AUTH_TYPE)
     email = models.EmailField(max_length=50, blank=True,null=True , unique=True)
     phone_number = models.CharField(max_length=13, blank=True, null=True, unique=True)
-    photo = models.ImageField(upload_to='/user_photos',
-            validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'heic'])])
+    photo = models.ImageField(upload_to='user_photos/', validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'heic'])])
 
     def __str__(self):
         return self.username
@@ -46,19 +45,21 @@ class CustomUser(AbstractUser, BaseModel):
     def check_username(self):
         if not self.username:
             temp_username = f'username{uuid.uuid4().__str__().split('-')[-1]}'
-            while CustomUser.objects.filter(username=temp_username).first().exists():
-                temp_username += str(random.randint(0,9))
+            user = CustomUser.objects.filter(username=temp_username).first()
+            if user:
+                while user.exists():
+                    temp_username += str(random.randint(0,9))
 
             self.username = temp_username
 
-    def check_pass(self, raw_password):
+    def set_temp_pass(self, raw_password):
         if not self.password:
             temp_password = f"pass{uuid.uuid4().__str__().split('-')[-1]}"
 
-            self.username = temp_password
+            self.password = temp_password
 
     def hashing_pass(self):
-        if self.password.startswidth('pbkdf2_sha256'):
+        if self.password.startswith('pbkdf2_sha256'):
             self.password = self.set_password(self.password)
 
     def check_email(self):
@@ -85,16 +86,11 @@ class CustomUser(AbstractUser, BaseModel):
         )
         return code
 
-    def clean(self):
+    def save( self, *args, **kwargs):
         self.check_email()
         self.check_username()
-        self.check_pass()
-        self.hashing_pass()
-        return super().clean()
-
-    def save( self, *, force_insert = ..., force_update = ..., using = ..., update_fields = ...):
-        self.clean()
-        return super().save(force_insert, force_update, using, update_fields)
+        self.set_temp_pass()
+        super().save(*args, **kwargs)
 
 
 class CodeVerify(BaseModel):
@@ -103,18 +99,18 @@ class CodeVerify(BaseModel):
     (VIA_PHONE, VIA_PHONE)
     )
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='verify_codes')
     code = models.CharField(max_length=4)
     verify_type = models.CharField(max_length=30, choices=VERIFY_TYPE)
     expiration_time = models.DateTimeField()
+    is_active = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.verify_type == VIA_EMAIL:
             self.expiration_time = datetime.now() + timedelta(minutes=EMAIL_EXPIRATION_TIME)
         else:
             self.expiration_time = datetime.now() + timedelta(minutes=PHONE_EXPIRATION_TIME)
-
-        return super().save()
+        super().save()
 
     def __str__(self):
         return f"{self.user.username} | {self.code}"
