@@ -1,10 +1,11 @@
 from rest_framework import serializers, status
 from .models import CustomUser, VIA_PHONE, VIA_EMAIL, CODE_VERIFY, DONE, PHOTO_DONE
 from rest_framework.exceptions import ValidationError
-from shared.utility import check_email_or_phone, check_email_or_phone_or_username
+from shared.utility import check_email_or_phone, check_email_or_phone_or_username, send_sms_code, send_email_code
 from django.db.models import Q
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
+from django.utils import timezone
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -24,12 +25,15 @@ class SignUpSerializer(serializers.ModelSerializer):
         user = super().create(validated_data)
         if user.auth_type == VIA_EMAIL:
             code = user.generate_code(VIA_EMAIL)
-            print(code)
+            send_email_code(user.email, code)
+
         elif user.auth_type == VIA_PHONE:
             code = user.generate_code(VIA_PHONE)
-            print(code)
+            send_sms_code(user.phone_number, code)
+
         else:
             raise ValidationError('Email yoki telefon raqam xato')
+
         user.save()
         return user
 
@@ -240,20 +244,20 @@ class ForgotPassword(serializers.Serializer):
         if user_data_type == 'username':
             if user.email:
                 code = user.generate_code(VIA_EMAIL)
-                print('Email Code :::::::::::', code)
+                send_email_code(user.email, code)
             elif user.phone_number:
                 code = user.generate_code(VIA_PHONE)
-                print('Phone Code :::::::::::', code)
+                send_sms_code(user.phone_number, code)
             else:
                 raise ValidationError("Toliq royxatdan otmagansiz")
 
         elif user_data_type == 'email':
             code = user.generate_code(VIA_EMAIL)
-            print('Email Code :::::::::::', code)
+            send_email_code(user.email, code)
 
         elif user_data_type == 'phone':
             code = user.generate_code(VIA_PHONE)
-            print('Phone Code :::::::::::', code)
+            send_sms_code(user.phone_number, code)
 
         attrs['user'] = user
         return attrs
@@ -288,21 +292,30 @@ class ResetPassword(serializers.Serializer):
                 'status': status.HTTP_400_BAD_REQUEST
             })
 
-        if user.code != code:
+        verify = user.verify_codes.filter(
+            code=code,
+            expiration_time__gte=timezone.now(),
+            is_active=False
+        ).first()
+
+        if not verify:
             raise ValidationError({
                 'message': "Tasdiqlash kodi xato",
                 'status': status.HTTP_400_BAD_REQUEST
             })
 
+        verify.is_active = True
+        verify.save()
+
         attrs['user'] = user
         return attrs
+
 
     def save(self, **kwargs):
         user = self.validated_data.get('user')
         password = self.validated_data.get('password')
 
         user.set_password(password)
-        user.code = None
         user.save()
 
         return {

@@ -34,3 +34,9 @@ def check_email_or_phone_or_username(user_input):
             'status': status.HTTP_400_BAD_REQUEST,
             'message': "Login xato kiritdingiz."
         })
+
+def send_email_code(email, code):
+    print(f"Email yuborildi {email}: {code}")
+
+def send_sms_code(phone, code):
+    print(f"SMS yuborildi {phone}: {code}")

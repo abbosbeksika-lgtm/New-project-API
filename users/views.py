@@ -10,6 +10,9 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Q
+from shared.email import send_email_code
+from shared.sms import send_sms_code
+
 
 
 class SignUpView(CreateAPIView):
@@ -60,10 +63,11 @@ class GetNewCodeView(APIView):
 
         if user.auth_type == VIA_EMAIL:
             code = user.generate_code(VIA_EMAIL)
-            print(code)
+            send_email_code(user.email, code)
+
         elif user.auth_type == VIA_PHONE:
             code = user.generate_code(VIA_PHONE)
-            print(code)
+            send_sms_code(user.phone_number, code)
 
         return Response({
             'message': "Kod yuborildi",
@@ -153,6 +157,15 @@ class ForgotPassword(APIView):
     def post(self, request):
         serializer = ForgotPassword(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data.get('user')
+        if user.email:
+            code = user.generate_code(VIA_EMAIL)
+            send_email_code(user.email, code)
+
+        elif user.phone_number:
+            code = user.generate_code(VIA_PHONE)
+            send_sms_code(user.phone_number, code)
 
         return Response({
             'status': status.HTTP_200_OK,
