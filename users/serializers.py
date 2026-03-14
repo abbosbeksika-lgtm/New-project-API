@@ -260,4 +260,52 @@ class ForgotPassword(serializers.Serializer):
 
 
 class ResetPassword(serializers.Serializer):
-    pass
+    code = serializers.IntegerField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        confirm_password = attrs.get('confirm_password')
+        code = attrs.get('code')
+        user = self.context.get('user')
+
+        if not user:
+            raise ValidationError({
+                'message': "Foydalanuvchi topilmadi",
+                'status': status.HTTP_400_BAD_REQUEST
+            })
+
+        if password != confirm_password:
+            raise ValidationError({
+                'message': "Parollar mos emas",
+                'status': status.HTTP_400_BAD_REQUEST
+            })
+
+        if ' ' in password:
+            raise ValidationError({
+                'message': "Parolda probel bo'lishi mumkin emas",
+                'status': status.HTTP_400_BAD_REQUEST
+            })
+
+        if user.code != code:
+            raise ValidationError({
+                'message': "Tasdiqlash kodi xato",
+                'status': status.HTTP_400_BAD_REQUEST
+            })
+
+        attrs['user'] = user
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.validated_data.get('user')
+        password = self.validated_data.get('password')
+
+        user.set_password(password)
+        user.code = None
+        user.save()
+
+        return {
+            "status": status.HTTP_200_OK,
+            "message": "Parol muvaffaqiyatli yangilandi"
+        }
