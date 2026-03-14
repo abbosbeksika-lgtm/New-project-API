@@ -10,8 +10,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Q
-from shared.email import send_email_code
-from shared.sms import send_sms_code
+from shared.utility import send_email_code, send_sms_code
 
 
 

@@ -143,12 +143,13 @@ EMAIL_EXPIRATION_TIME = 3
 PHONE_EXPIRATION_TIME = 2
 
 
-REST_FRAMEWORK = {'DEFAULD_AUTHENTICATION_CLASSES':[
-    'rest_framework_simplejwt.authentication.JWTAuthentication'
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_PERMISSION_CLASSES':[
-        'rest_framework.permission.IsAuthenticated',
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
 }
 
 
