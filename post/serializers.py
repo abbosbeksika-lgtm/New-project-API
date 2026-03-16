@@ -100,34 +100,3 @@ class FollowingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ['id', 'username', 'photo', 'created_at']
-
-
-class StorySerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
-    view_count = serializers.ReadOnlyField()
-
-    class Meta:
-        model = Story
-        fields = ['id', 'user', 'file', 'text', 'expiration_time', 'view_count', 'created_at']
-        read_only_fields = ['id', 'user', 'created_at']
-
-    def validate_expiration_time(self, value):
-        if value <= timezone.now():
-            raise ValidationError({'message': "Tugash vaqti hozirgi vaqtdan katta bolishi kerak"})
-        return value
-
-
-class StoryViewSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = StoryView
-        fields = ['id', 'user', 'story', 'created_at']
-        read_only_fields = ['id', 'user', 'created_at']
-
-    def validate(self, attrs):
-        user = self.context['request'].user
-        story = attrs.get('story')
-        if StoryView.objects.filter(user=user, story=story).exists():
-            raise ValidationError({'message': "Siz bu storyni allaqachon ko'rgansiz"})
-        return attrs

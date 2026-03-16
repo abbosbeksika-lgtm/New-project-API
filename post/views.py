@@ -9,7 +9,7 @@ from .models import Post, Comment, CommentLike, Like, Follow, Story, StoryView
 from .serializers import (
     PostSerializer, CommentSerializer, CommentLikeSerializer,
     LikeSerializer, FollowSerializer, FollowerListSerializer,
-    FollowingListSerializer, StorySerializer, StoryViewSerializer
+    FollowingListSerializer
 )
 
 User = get_user_model()
@@ -207,67 +207,3 @@ class FollowingListView(ListAPIView):
         user_id = self.kwargs.get('user_id')
         return Follow.objects.filter(follower_id=user_id).order_by('-created_at')
 
-
-class StoryCreateView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request):
-        serializer = StorySerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
-        return Response({
-            'status': status.HTTP_201_CREATED,
-            'message': "Story qo'shildi",
-            'data': serializer.data
-        }, status=status.HTTP_201_CREATED)
-
-
-class StoryListView(ListAPIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = StorySerializer
-
-    def get_queryset(self):
-        return Story.objects.filter(
-            expiration_time__gt=timezone.now()
-        ).order_by('-created_at')
-
-
-class StoryDeleteView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def delete(self, request, pk):
-        try:
-            story = Story.objects.get(pk=pk)
-        except Story.DoesNotExist:
-            raise ValidationError({'message': "Story topilmadi"})
-
-        if story.user != request.user:
-            raise ValidationError({'message': "Bu story sizniki emas"})
-
-        story.delete()
-        return Response({
-            'status': status.HTTP_204_NO_CONTENT,
-            'message': "Story o'chirildi"
-        }, status=status.HTTP_204_NO_CONTENT)
-
-
-class StoryViewCreateView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request, story_id):
-        try:
-            story = Story.objects.get(pk=story_id)
-        except Story.DoesNotExist:
-            raise ValidationError({'message': "Story topilmadi"})
-
-        if StoryView.objects.filter(user=request.user, story=story).exists():
-            return Response({
-                'status': status.HTTP_200_OK,
-                'message': "Siz bu storyni allaqachon ko'rgansiz"
-            })
-
-        StoryView.objects.create(user=request.user, story=story)
-        return Response({
-            'status': status.HTTP_201_CREATED,
-            'message': "Story ko'rildi"
-        }, status=status.HTTP_201_CREATED)
