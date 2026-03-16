@@ -4,7 +4,7 @@ from rest_framework.views import APIView, status
 from rest_framework import permissions
 from .models import CustomUser, NEW, CODE_VERIFY, DONE, PHOTO_DONE, VIA_PHONE, VIA_EMAIL
 from .serializers import (SignUpSerializer, UserChangeInfoSerializer, UserPhotoStatusSerializer, LoginSerializer,\
-                           ForgotPassword, ResetPassword)
+                           ForgotPasswordSerializer, ResetPasswordSerializer)
 from datetime import datetime
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -150,11 +150,11 @@ class LoginRefresh(APIView):
 
             return Response(response_data)
 
-class ForgotPassword(APIView):
+class ForgotPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
-        serializer = ForgotPassword(data=request.data)
+        serializer = ForgotPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data.get('user')
@@ -172,7 +172,7 @@ class ForgotPassword(APIView):
         })
 
 
-class ResetPassword(APIView):
+class ResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
@@ -203,7 +203,7 @@ class ResetPassword(APIView):
         verify.is_active = True
         verify.save()
 
-        serializer = ResetPassword(data=request.data)
+        serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.update(instance=user, validated_data=serializer.validated_data)
 

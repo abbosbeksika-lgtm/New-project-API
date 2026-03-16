@@ -225,7 +225,7 @@ class LoginSerializer(TokenObtainPairSerializer):
         return True
 
 
-class ForgotPassword(serializers.Serializer):
+class ForgotPasswordSerializer(serializers.Serializer):
     user_input = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
@@ -263,7 +263,7 @@ class ForgotPassword(serializers.Serializer):
         return attrs
 
 
-class ResetPassword(serializers.Serializer):
+class ResetPasswordSerializer(serializers.Serializer):
     code = serializers.IntegerField(required=True)
     password = serializers.CharField(required=True, write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True)
