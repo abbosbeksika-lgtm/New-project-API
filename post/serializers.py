@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from django.utils import timezone
-from .models import Post, Comment, CommentLike, Like, Follow, Story, StoryView
+from .models import Post, Comment, CommentLike, Like, Follow
 
 
 User = get_user_model()

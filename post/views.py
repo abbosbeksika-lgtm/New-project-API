@@ -1,16 +1,11 @@
 from rest_framework.views import APIView
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from django.contrib.auth import get_user_model
-from django.utils import timezone
-from .models import Post, Comment, CommentLike, Like, Follow, Story, StoryView
-from .serializers import (
-    PostSerializer, CommentSerializer, CommentLikeSerializer,
-    LikeSerializer, FollowSerializer, FollowerListSerializer,
-    FollowingListSerializer
-)
+from .models import Post, Comment, CommentLike, Like, Follow
+from .serializers import (PostSerializer, CommentSerializer, FollowerListSerializer, FollowingListSerializer)
 
 User = get_user_model()
 
